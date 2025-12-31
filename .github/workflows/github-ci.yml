@@ -19,5 +19,15 @@ jobs:
     - name: Run PHPStan
       run: docker exec queuer-php-fpm vendor/phpstan/phpstan/phpstan
 
+    - name: Debug mounted files
+      run: |
+        echo "Runner pwd: $(pwd)"
+        echo "Runner reference.php:"
+        sed -n '1,5p' config/reference.php || true
+        echo "Container mount + reference.php:"
+        docker inspect queuer-php-fpm --format '{{range .Mounts}}{{if eq .Destination "/application"}}SRC={{.Source}} DST={{.Destination}}{{println}}{{end}}{{end}}'
+        docker exec queuer-php-fpm sh -lc 'sed -n "1,5p" /application/config/reference.php; sha256sum /application/config/reference.php'
+
+
     - name: Run PHP-CS-Fixer
       run: docker exec queuer-php-fpm vendor/friendsofphp/php-cs-fixer/php-cs-fixer fix --dry-run --diff --allow-risky=yes --verbose --show-progress dots
